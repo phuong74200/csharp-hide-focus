@@ -1,0 +1,48 @@
+using System;
+using System.Runtime.InteropServices;
+
+public class WindowFocusListener
+{
+        private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    private static extern bool EnumWindows(EnumWindowsProc enumProc, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    private static extern bool IsWindowVisible(IntPtr hWnd);
+
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+    private static extern int GetWindowTextLength(IntPtr hWnd);
+
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+    private static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder lpString, int nMaxCount);
+
+    static void Main(string[] args)
+    {
+        Console.WriteLine("Listening for changes to the focused window. Press any key to exit.");
+
+        IntPtr currentWindow = IntPtr.Zero;
+
+        while (!Console.KeyAvailable)
+        {
+            IntPtr newWindow = GetForegroundWindow();
+
+            if (newWindow != currentWindow)
+            {
+                currentWindow = newWindow;
+
+                if (IsWindowVisible(currentWindow))
+                {
+                    int length = GetWindowTextLength(currentWindow);
+                    var builder = new System.Text.StringBuilder(length + 1);
+                    GetWindowText(currentWindow, builder, builder.Capacity);
+
+                    Console.WriteLine("Focused window changed to: " + builder.ToString());
+                }
+            }
+        }
+    }
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+}
